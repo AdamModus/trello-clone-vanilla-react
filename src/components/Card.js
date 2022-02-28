@@ -1,4 +1,5 @@
 import React from "react";
+import { useTrelloContext } from "../context/TrelloContextManagement";
 
 const cardStyle = {
   backgroundColor: "#fff",
@@ -19,34 +20,46 @@ const buttonStyle = {
   marginTop: "10px",
 };
 
-class Column extends React.Component {
-  render() {
-    if (this.props.phantomCard) {
-      return (
-        <div style={phantomCardStyle} id="phantomCard">
-          <h5>
-            <input
-              type="text"
-              placeholder="New card title"
-              id="phantomCardTitle"
-            />
-          </h5>
+function Card({ columnId, title, content, phantomCard }) {
+  const { addCard } = useTrelloContext();
+  const [newCardTitle, setNewCardTitle] = React.useState("");
+  const [newCardContent, setNewCardContent] = React.useState("");
+
+  const handleAddCard = () => {
+    addCard(newCardTitle, newCardContent, columnId);
+    setNewCardTitle("");
+    setNewCardContent("");
+  };
+
+  if (phantomCard) {
+    return (
+      <div style={phantomCardStyle}>
+        <h5>
           <input
             type="text"
-            placeholder="New card content"
-            id="phantomCardContent"
+            placeholder="New card title"
+            onChange={(e) => setNewCardTitle(e.target.value)}
+            value={newCardTitle}
           />
-          <button style={buttonStyle}>Add card</button>
-        </div>
-      );
-    }
-    return (
-      <div style={cardStyle}>
-        <h5> {this.props.title} </h5>
-        <div> {this.props.content} </div>
+        </h5>
+        <input
+          type="text"
+          placeholder="New card content"
+          onChange={(e) => setNewCardContent(e.target.value)}
+          value={newCardContent}
+        />
+        <button style={buttonStyle} onClick={handleAddCard}>
+          Add card
+        </button>
       </div>
     );
   }
+  return (
+    <div style={cardStyle}>
+      <h5> {title} </h5>
+      <div> {content} </div>
+    </div>
+  );
 }
 
-export default Column;
+export default Card;

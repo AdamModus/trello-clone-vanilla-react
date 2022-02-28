@@ -1,4 +1,5 @@
 import React from "react";
+import { useTrelloContext } from "../context/TrelloContextManagement";
 import Card from "./Card";
 
 const cardContainerStyle = {
@@ -14,33 +15,50 @@ const columnStyle = {
   padding: "10px",
 };
 
-class Column extends React.Component {
-  render() {
-    if (this.props.phantomColumn) {
-      return (
-        <div style={columnStyle}>
-          <h3>
-            <input type="text" placeholder="Add a new column" id="phantomCol" />
-          </h3>
-          <button>Add column</button>
-        </div>
-      );
-    }
+function Column({ id, name, cards, phantomColumn }) {
+  const { addColumn } = useTrelloContext();
+  const [newColumnName, setNewColumnName] = React.useState("");
+
+  const handleAddColumn = () => {
+    addColumn(newColumnName);
+    setNewColumnName("");
+  };
+
+  if (phantomColumn) {
     return (
       <div style={columnStyle}>
-        <h3> {this.props.name} </h3>
-
-        <div style={cardContainerStyle}>
-          {this.props.cards.map((card, index) => {
-            return (
-              <Card key={index} title={card.title} content={card.content} />
-            );
-          })}
-          <Card phantomCard />
-        </div>
+        <h3>
+          <input
+            type="text"
+            placeholder="New column name"
+            onChange={(e) => setNewColumnName(e.target.value)}
+            value={newColumnName}
+          />
+        </h3>
+        <button onClick={handleAddColumn}>Add column</button>
       </div>
     );
   }
+
+  return (
+    <div style={columnStyle}>
+      <h3> {name} </h3>
+
+      <div style={cardContainerStyle}>
+        {cards.map((card, index) => {
+          return (
+            <Card
+              key={index}
+              columnId={id}
+              title={card.title}
+              content={card.content}
+            />
+          );
+        })}
+        <Card columnId={id} phantomCard />
+      </div>
+    </div>
+  );
 }
 
 export default Column;
