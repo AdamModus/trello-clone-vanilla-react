@@ -15,13 +15,22 @@ const columnStyle = {
   padding: "10px",
 };
 
+const deleteStyle = {
+  cursor: "pointer",
+  float: "right",
+};
+
 function Column({ id, name, cards, phantomColumn }) {
-  const { addColumn } = useTrelloContext();
+  const { addColumn, deleteColumn } = useTrelloContext();
   const [newColumnName, setNewColumnName] = React.useState("");
 
   const handleAddColumn = () => {
     addColumn(newColumnName);
     setNewColumnName("");
+  };
+
+  const handleDeleteColumn = () => {
+    deleteColumn(id);
   };
 
   if (phantomColumn) {
@@ -42,13 +51,17 @@ function Column({ id, name, cards, phantomColumn }) {
 
   return (
     <div style={columnStyle}>
-      <h3> {name} </h3>
+      <h3 onClick={handleDeleteColumn} style={deleteStyle}>
+        🗑
+      </h3>
+      <h3>{name}</h3>
 
       <div style={cardContainerStyle}>
         {cards.map((card, index) => {
           return (
             <Card
               key={index}
+              id={index}
               columnId={id}
               title={card.title}
               content={card.content}

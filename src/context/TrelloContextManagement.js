@@ -49,7 +49,10 @@ const initialState = [
 const TrelloContext = React.createContext({
   trelloColumns: [],
   addColumn: () => {},
+  deleteColumn: () => {},
   addCard: () => {},
+  deleteCard: () => {},
+  editCard: () => {},
 });
 export const TrelloContextConsumer = TrelloContext.Consumer;
 
@@ -66,6 +69,12 @@ export const TrelloContextProvider = ({ children }) => {
     ]);
   };
 
+  const deleteColumn = (columnId) => {
+    setTrelloColumns(
+      trelloColumns.filter((column, index) => index !== columnId)
+    );
+  };
+
   const addCard = (title, content, columnIndex) => {
     const newCard = { title, content };
     const targetColumn = trelloColumns[columnIndex];
@@ -77,8 +86,36 @@ export const TrelloContextProvider = ({ children }) => {
     setTrelloColumns([...leftCols, targetColumn, ...rightCols]);
   };
 
+  const deleteCard = (columnIndex, cardIndex) => {
+    const targetColumn = trelloColumns[columnIndex];
+    targetColumn.cards.splice(cardIndex, 1);
+
+    const leftCols = trelloColumns.slice(0, columnIndex);
+    const rightCols = trelloColumns.slice(columnIndex + 1);
+    setTrelloColumns([...leftCols, targetColumn, ...rightCols]);
+  };
+
+  const editCard = (newTitle, newContent, columnIndex, cardIndex) => {
+    const targetColumn = trelloColumns[columnIndex];
+    targetColumn.cards[cardIndex].title = newTitle;
+    targetColumn.cards[cardIndex].content = newContent;
+
+    const leftCols = trelloColumns.slice(0, columnIndex);
+    const rightCols = trelloColumns.slice(columnIndex + 1);
+    setTrelloColumns([...leftCols, targetColumn, ...rightCols]);
+  };
+
   return (
-    <TrelloContext.Provider value={{ trelloColumns, addColumn, addCard }}>
+    <TrelloContext.Provider
+      value={{
+        trelloColumns,
+        addColumn,
+        deleteColumn,
+        addCard,
+        deleteCard,
+        editCard,
+      }}
+    >
       {children}
     </TrelloContext.Provider>
   );

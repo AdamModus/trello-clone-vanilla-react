@@ -5,7 +5,7 @@ const cardStyle = {
   backgroundColor: "#fff",
   borderRadius: "3px",
   boxShadow: "0 1px 0 #091e4240",
-  cursor: "pointer",
+  cursor: "move",
   padding: "10px",
 };
 
@@ -20,18 +20,53 @@ const buttonStyle = {
   marginTop: "10px",
 };
 
-function Card({ columnId, title, content, phantomCard }) {
-  const { addCard } = useTrelloContext();
-  const [newCardTitle, setNewCardTitle] = React.useState("");
-  const [newCardContent, setNewCardContent] = React.useState("");
+const iconsWrapperStyle = {
+  float: "right",
+};
+
+const iconStyle = {
+  cursor: "pointer",
+};
+
+const deleteIconStyle = {
+  ...iconStyle,
+  ...{
+    marginLeft: "10px",
+  },
+};
+
+function Card({ id, columnId, title = "", content = "", phantomCard = false }) {
+  const { addCard, deleteCard, editCard } = useTrelloContext();
+  const [newCardTitle, setNewCardTitle] = React.useState(title);
+  const [newCardContent, setNewCardContent] = React.useState(content);
+  const [editMode, setEditMode] = React.useState(phantomCard);
 
   const handleAddCard = () => {
+    if (newCardTitle.trim() === "" || newCardContent.trim() === "") {
+      return;
+    }
     addCard(newCardTitle, newCardContent, columnId);
     setNewCardTitle("");
     setNewCardContent("");
   };
 
-  if (phantomCard) {
+  const handleDeleteCard = () => {
+    deleteCard(columnId, id);
+  };
+
+  const handleEditCard = () => {
+    if (newCardTitle.trim() === "" || newCardContent.trim() === "") {
+      return;
+    }
+    editCard(newCardTitle, newCardContent, columnId, id);
+    setEditMode(false);
+  };
+
+  const handleSetEditMode = () => {
+    setEditMode(true);
+  };
+
+  if (editMode) {
     return (
       <div style={phantomCardStyle}>
         <h5>
@@ -48,15 +83,29 @@ function Card({ columnId, title, content, phantomCard }) {
           onChange={(e) => setNewCardContent(e.target.value)}
           value={newCardContent}
         />
-        <button style={buttonStyle} onClick={handleAddCard}>
-          Add card
-        </button>
+        {phantomCard ? (
+          <button style={buttonStyle} onClick={handleAddCard}>
+            Add Card
+          </button>
+        ) : (
+          <button style={buttonStyle} onClick={handleEditCard}>
+            Set Card
+          </button>
+        )}
       </div>
     );
   }
   return (
     <div style={cardStyle}>
-      <h5> {title} </h5>
+      <h5 style={iconsWrapperStyle}>
+        <span onClick={handleSetEditMode} style={iconStyle}>
+          ✍️
+        </span>
+        <span onClick={handleDeleteCard} style={deleteIconStyle}>
+          🗑
+        </span>
+      </h5>
+      <h5>{title}</h5>
       <div> {content} </div>
     </div>
   );
