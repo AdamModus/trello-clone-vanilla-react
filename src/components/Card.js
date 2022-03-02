@@ -7,6 +7,7 @@ const cardStyle = {
   boxShadow: "0 1px 0 #091e4240",
   cursor: "move",
   padding: "10px",
+  pointerEvents: "auto",
 };
 
 const phantomCardStyle = {
@@ -36,7 +37,8 @@ const deleteIconStyle = {
 };
 
 function Card({ id, columnId, title = "", content = "", phantomCard = false }) {
-  const { addCard, deleteCard, editCard } = useTrelloContext();
+  const { addCard, deleteCard, editCard, cardDraggedStart } =
+    useTrelloContext();
   const [newCardTitle, setNewCardTitle] = React.useState(title);
   const [newCardContent, setNewCardContent] = React.useState(content);
   const [editMode, setEditMode] = React.useState(phantomCard);
@@ -66,9 +68,27 @@ function Card({ id, columnId, title = "", content = "", phantomCard = false }) {
     setEditMode(true);
   };
 
+  const handleDragStart = (e) => {
+    e.target.style.opacity = "0.4";
+    e.target.classList.add("dragged-card");
+    document.querySelectorAll(".card:not(.dragged-card)").forEach((card) => {
+      card.style.pointerEvents = "none";
+    });
+    cardDraggedStart(columnId, id);
+  };
+
+  const handleDragEnd = (e) => {
+    e.target.style.opacity = "1";
+    document.querySelectorAll(".card:not(.dragged-card)").forEach((card) => {
+      card.style.pointerEvents = cardStyle.pointerEvents;
+      card.style.backgroundColor = cardStyle.backgroundColor;
+    });
+    e.target.classList.remove("dragged-card");
+  };
+
   if (editMode) {
     return (
-      <div style={phantomCardStyle}>
+      <div className="card" style={phantomCardStyle}>
         <h5>
           <input
             type="text"
@@ -96,7 +116,13 @@ function Card({ id, columnId, title = "", content = "", phantomCard = false }) {
     );
   }
   return (
-    <div style={cardStyle}>
+    <div
+      className="card"
+      style={cardStyle}
+      draggable="true"
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <h5 style={iconsWrapperStyle}>
         <span onClick={handleSetEditMode} style={iconStyle}>
           ✍️

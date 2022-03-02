@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 
-const initialState = [
+const defaultState = [
   {
     name: "TODO",
     cards: [
@@ -46,6 +46,14 @@ const initialState = [
   },
 ];
 
+let initialState;
+const sessionState = sessionStorage.getItem("trello-state");
+if (sessionState) {
+  initialState = JSON.parse(sessionState);
+} else {
+  initialState = defaultState;
+}
+
 const TrelloContext = React.createContext({
   trelloColumns: [],
   addColumn: () => {},
@@ -53,14 +61,22 @@ const TrelloContext = React.createContext({
   addCard: () => {},
   deleteCard: () => {},
   editCard: () => {},
+  cardDraggedStart: () => {},
+  cardDraggedEnd: () => {},
 });
 export const TrelloContextConsumer = TrelloContext.Consumer;
 
 export const TrelloContextProvider = ({ children }) => {
   const [trelloColumns, setTrelloColumns] = React.useState(initialState);
+  const [draggedCardMetadata, setDraggedCardMetadata] = React.useState(null);
+
+  const setTrelloColumnsWithSideEffect = (newTrelloColumns) => {
+    setTrelloColumns(newTrelloColumns);
+    sessionStorage.setItem("trello-state", JSON.stringify(newTrelloColumns));
+  };
 
   const addColumn = (name) => {
-    setTrelloColumns([
+    setTrelloColumnsWithSideEffect([
       ...trelloColumns,
       {
         name,
@@ -70,7 +86,7 @@ export const TrelloContextProvider = ({ children }) => {
   };
 
   const deleteColumn = (columnId) => {
-    setTrelloColumns(
+    setTrelloColumnsWithSideEffect(
       trelloColumns.filter((column, index) => index !== columnId)
     );
   };
@@ -83,7 +99,7 @@ export const TrelloContextProvider = ({ children }) => {
 
     const leftCols = trelloColumns.slice(0, columnIndex);
     const rightCols = trelloColumns.slice(columnIndex + 1);
-    setTrelloColumns([...leftCols, targetColumn, ...rightCols]);
+    setTrelloColumnsWithSideEffect([...leftCols, targetColumn, ...rightCols]);
   };
 
   const deleteCard = (columnIndex, cardIndex) => {
@@ -92,7 +108,7 @@ export const TrelloContextProvider = ({ children }) => {
 
     const leftCols = trelloColumns.slice(0, columnIndex);
     const rightCols = trelloColumns.slice(columnIndex + 1);
-    setTrelloColumns([...leftCols, targetColumn, ...rightCols]);
+    setTrelloColumnsWithSideEffect([...leftCols, targetColumn, ...rightCols]);
   };
 
   const editCard = (newTitle, newContent, columnIndex, cardIndex) => {
@@ -102,7 +118,28 @@ export const TrelloContextProvider = ({ children }) => {
 
     const leftCols = trelloColumns.slice(0, columnIndex);
     const rightCols = trelloColumns.slice(columnIndex + 1);
-    setTrelloColumns([...leftCols, targetColumn, ...rightCols]);
+    setTrelloColumnsWithSideEffect([...leftCols, targetColumn, ...rightCols]);
+  };
+
+  const cardDraggedStart = (columnIndex, cardIndex) => {
+    setDraggedCardMetadata({ columnIndex, cardIndex });
+  };
+
+  const cardDraggedEnd = (newColumnIndex) => {
+    const oldColumnIndex = draggedCardMetadata.columnIndex;
+    const oldCardIndex = draggedCardMetadata.cardIndex;
+    if (
+      isNaN(oldColumnIndex) ||
+      isNaN(oldCardIndex) ||
+      oldColumnIndex === newColumnIndex
+    ) {
+      setDraggedCardMetadata(null);
+      return;
+    }
+    const draggedCard = trelloColumns[oldColumnIndex].cards[oldCardIndex];
+    deleteCard(oldColumnIndex, oldCardIndex);
+    addCard(draggedCard.title, draggedCard.content, newColumnIndex);
+    setDraggedCardMetadata(null);
   };
 
   return (
@@ -114,6 +151,8 @@ export const TrelloContextProvider = ({ children }) => {
         addCard,
         deleteCard,
         editCard,
+        cardDraggedStart,
+        cardDraggedEnd,
       }}
     >
       {children}

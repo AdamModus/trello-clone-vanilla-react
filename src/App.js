@@ -9,7 +9,9 @@ const headerStyle = {
 function App() {
   return (
     <div>
-      <h1 style={headerStyle}>This is my react app!</h1>
+      <h1 style={headerStyle}>
+        This is my litle Trello clone made only with vanilla react!
+      </h1>
       <TrelloContextProvider>
         <Columns />
       </TrelloContextProvider>
